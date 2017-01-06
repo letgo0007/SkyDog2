@@ -14,6 +14,8 @@
  */
 
 #include "app_player.h"
+#include "app.h"
+#include "bsp.h"
 #include "hal.h"
 
 /******************************************************************************
@@ -24,12 +26,13 @@
 #define PLAYER_SPI_M_CS_DATA_DELAY  100
 #define PLAYER_SPI_M_DATA_CS_DELAY  100
 
-#define PLAYER_DUTY_CH_MAX          256
+#define PLAYER_DUTY_CH_MAX          128
 
 /******************************************************************************
- * Operation buffers.
+ * Internal Variables.
  *****************************************************************************/
-static uint16_t gPlayer_DutyBuf[PLAYER_DUTY_CH_MAX];
+uint16_t gPlayer_LdDutyBuf[PLAYER_DUTY_CH_MAX];     //Local Dimming duty buffer.
+uint16_t gPlayer_TpDutyBuf[PLAYER_DUTY_CH_MAX];     //Test Pattern duty buffer.
 
 /******************************************************************************
  * Internal Functions.
@@ -157,7 +160,27 @@ void Player_Cpld_setDuty(uint16_t *pu16duty, uint16_t duty_size, PLAYER_OUTPUT_M
 
 void Player_Iw7027_setDuty(uint16_t *pu16duty, uint16_t duty_size, PLAYER_OUTPUT_MODEL emodel)
 {
-    ;
+    Iw7027_setDuty(pu16duty, 0);
+}
+
+uint16_t Player_VsyncIn_getFreq(void)
+{
+    return PwmIn_getFreq(1);
+}
+
+uint16_t Player_VsyncIn_getRiseEdgeFlag(void)
+{
+    return PwmIn_getRiseEdgeFlag(1);
+}
+
+void Player_VsyncOut_setPwm(uint16_t freq, uint16_t duty)
+{
+    PwmOut_setOutput(2, freq, duty);
+}
+
+uint16_t Player_VsyncOut_getRiseEdgeFlag()
+{
+    return PwmOut_getRiseEdgeFlag(2);
 }
 
 /******************************************************************************
@@ -165,20 +188,25 @@ void Player_Iw7027_setDuty(uint16_t *pu16duty, uint16_t duty_size, PLAYER_OUTPUT
  *****************************************************************************/
 uint16_t App_Player_getDuty(uint16_t *pu16duty, PLAYER_INPUT_MODEL emodel)
 {
+    //Check Parameter Validation.
+    if (emodel == IN_DISABLE)
+    {
+        return 0;
+    }
     if ((pu16duty == 0))
     {
-        PLAYER_LOG("\r\nFUNC:[%s] ERROR : NULL pointer.\r\n", __FUNCTION__);
-        return PLAYER_FAIL;
+        PLAYER_LOG("\r\nFUNC:[%s] ERROR : NULL pointer.", __FUNCTION__);
+        return 0;
     }
-
     uint16_t spi_size = 0;
     uint16_t duty_size = 0;
     uint8_t spi_buf[PLAYER_SPI_S_MAX_SIZE];
-    //Get SPI Slave data.
+
+    //Get data from SPI Slave.
     spi_size = Player_SpiSlave_gets(spi_buf);
     if (spi_size == 0)
     {
-        return PLAYER_FAIL;
+        return 0;
     }
 
     //Handle format convert.
@@ -186,25 +214,38 @@ uint16_t App_Player_getDuty(uint16_t *pu16duty, PLAYER_INPUT_MODEL emodel)
     {
     case IN_D8_P8:
     {
-        duty_size = spi_size;
-        Player_D8P8_TO_D12P16(spi_buf, pu16duty, spi_size);
+        duty_size = Player_D8P8_TO_D12P16(spi_buf, pu16duty, spi_size);
         break;
     }
     case IN_D12_P8X1_5:
     {
-        duty_size = spi_size * 2 / 3;
-        Player_D12P8X1_5_TO_D12P16(spi_buf, pu16duty, spi_size);
+        duty_size = Player_D12P8X1_5_TO_D12P16(spi_buf, pu16duty, spi_size);
         break;
     }
     case IN_D12_P8X2:
     {
-        duty_size = spi_size / 2;
-        Player_D12P8X2_TO_D12P16(spi_buf, pu16duty, spi_size);
+        duty_size = Player_D12P8X2_TO_D12P16(spi_buf, pu16duty, spi_size);
+        break;
+    }
+    case IN_MFC11_SU860A_6X10:
+    {
+        /* YZF : D0 + D1 + ... + DN + TAIL. Data = 12bit.
+         *       Don't know the exact format of TAIL , but it seems not cared...
+         *       Just ignore the TAIL , get fixed amount of duty according to model index.
+         */
+        duty_size = 60;
+        Player_D12P8X1_5_TO_D12P16(spi_buf, pu16duty, spi_size);
+        break;
+    }
+    case IN_MFC11_SU860A_6X13:
+    {
+        duty_size = 78;
+        Player_D12P8X1_5_TO_D12P16(spi_buf, pu16duty, spi_size);
         break;
     }
     default:
     {
-        PLAYER_LOG("FUNC:[%s] emodel = %x , not supported format. ", __FUNCTION__, emodel);
+        PLAYER_LOG("\r\nFUNC:[%s] emodel = %x , not supported format.", __FUNCTION__, emodel);
         return 0;
     }
     }
@@ -213,9 +254,14 @@ uint16_t App_Player_getDuty(uint16_t *pu16duty, PLAYER_INPUT_MODEL emodel)
 
 PLAYER_RET App_Player_setDuty(uint16_t *pu16duty, uint16_t duty_size, PLAYER_OUTPUT_MODEL emodel)
 {
+    if (emodel == OUT_DISABLE)
+    {
+        return PLAYER_FAIL;
+    }
+
     if ((pu16duty == 0))
     {
-        PLAYER_LOG("\r\nFUNC:[%s] ERROR : NULL pointer.\r\n", __FUNCTION__);
+        PLAYER_LOG("\r\nFUNC:[%s] ERROR : NULL pointer.", __FUNCTION__);
         return PLAYER_FAIL;
     }
 
@@ -258,76 +304,74 @@ PLAYER_RET App_Player_setDuty(uint16_t *pu16duty, uint16_t duty_size, PLAYER_OUT
     }
     default:
     {
-        PLAYER_LOG("\r\nFUNC:[%s] ERROR : emodel = %x , not supported format. \r\n", __FUNCTION__, emodel);
+        PLAYER_LOG("\r\nFUNC:[%s] ERROR : emodel = %x , not supported format.", __FUNCTION__, emodel);
         return PLAYER_FAIL;
     }
     }
-
     return PLAYER_SUCCESS;
 }
 
-PLAYER_RET App_Player_setTestPattern(PLAYER_TEST_PATTERN eptp, uint16_t duty_size, PLAYER_OUTPUT_MODEL emodel)
+PLAYER_RET App_Player_prepareTestPattern(uint16_t *pu16tpbuf, uint16_t duty_size, PLAYER_TEST_PATTERN eptp)
 {
     switch (eptp)
     {
     case PTP_MUTE:
     {
         uint16_t i;
-        uint16_t duty_buf[PLAYER_SPI_S_MAX_SIZE / 2];
         for (i = 0; i < duty_size; i++)
         {
-            duty_buf[i] = 0x0000;
+            pu16tpbuf[i] = 0x0000;
         }
-        App_Player_setDuty(duty_buf, duty_size, emodel);
         break;
     }
     case PTP_MAX:
     {
         uint16_t i;
-        uint16_t duty_buf[PLAYER_SPI_S_MAX_SIZE / 2];
         for (i = 0; i < duty_size; i++)
         {
-            duty_buf[i] = 0x0FFF;
+            pu16tpbuf[i] = 0x0FFF;
         }
-        App_Player_setDuty(duty_buf, duty_size, emodel);
         break;
     }
     case PTP_50:
     {
         uint16_t i;
-        uint16_t duty_buf[PLAYER_SPI_S_MAX_SIZE / 2];
         for (i = 0; i < duty_size; i++)
         {
-            duty_buf[i] = 0x0800;
+            pu16tpbuf[i] = 0x0800;
         }
-        App_Player_setDuty(duty_buf, duty_size, emodel);
         break;
     }
     case PTP_RUN_HORSE:
     {
         uint16_t i;
-        uint16_t duty_buf[PLAYER_SPI_S_MAX_SIZE / 2];
-        for (i = 0; i < duty_size; i++)
-        {
-            duty_buf[i] = 0x0000;
-        }
-
-        static uint16_t frame_count = 0;
+        static uint16_t frame_count = 60;
         static uint16_t light_index = 0;
+
+        //Run Horse every 60Frame.
+        frame_count++;
         if (frame_count >= 60)
         {
-            duty_buf[light_index] = 0x0800;
-            duty_buf[light_index - 1] = 0x0000;
+            //Build Black Screen
+            for (i = 0; i < duty_size; i++)
+            {
+                pu16tpbuf[i] = 0x0000;
+            }
+            //Light Up 1 channel.
+            pu16tpbuf[light_index] = 0x0800;
             light_index++;
+            //Reset count & handle over range.
             frame_count = 0;
+            if (light_index >= duty_size)
+            {
+                light_index = 0;
+            }
         }
-
-        App_Player_setDuty(duty_buf, duty_size, emodel);
         break;
     }
     default:
     {
-        PLAYER_LOG("\r\nFUNC:[%s] ERROR : eptp = %x , not supported index. \r\n", __FUNCTION__, emodel);
+        PLAYER_LOG("\r\nFUNC:[%s] ERROR : eptp = %x , not supported index.", __FUNCTION__, eptp);
         return PLAYER_FAIL;
     }
     }
@@ -340,8 +384,8 @@ PLAYER_RET App_Player_printDuty(uint16_t *pu16duty, uint16_t col, uint16_t row)
     if ((pu16duty == 0))
     {
         //If pointer is null , print default duty buffer .
-        PLAYER_LOG("\r\nFUNC:[%s] WARNING : Invalid Pointer , Print Default Duty Buffer.\r\n", __FUNCTION__);
-        pu16duty = gPlayer_DutyBuf;
+        PLAYER_LOG("\r\nFUNC:[%s] WARNING : Invalid Pointer , Print Default Duty Buffer.", __FUNCTION__);
+        pu16duty = gPlayer_LdDutyBuf;
     }
 
     PLAYER_LOG("\r\nPrint Duty , COL = [%d] , ROW = [%d].\r\n", col, row);
@@ -366,10 +410,67 @@ PLAYER_RET App_Player_setWorkParam(PLAYER_PARAM *param)
 
 PLAYER_RET App_Player(PLAYER_PARAM *param)
 {
-    uint16_t duty_size;
+    /*Step 1 : Get Duty from SPI slave .*/
+    uint16_t spi_duty_size;
+    spi_duty_size = App_Player_getDuty(gPlayer_LdDutyBuf, param->pin_model);
 
-    duty_size = App_Player_getDuty(gPlayer_DutyBuf, param->pin_model);
-    App_Player_setDuty(gPlayer_DutyBuf, duty_size, param->pout_model);
+    /*Step 2 : Decide Duty output size according to SYNC MODE. */
+    uint16_t output_duty_size = 0;
+
+    switch (param->psync_mode)
+    {
+    case PSYNC_OUT_ON_SPI_IN:
+    {
+        if (spi_duty_size)   //Output when SPI input is valid.
+        {
+            output_duty_size = spi_duty_size;
+        }
+        break;
+    }
+    case PSYNC_OUT_ON_VSYNC_IN:
+    {
+        if (Player_VsyncOut_getRiseEdgeFlag())
+        {
+            output_duty_size = param->pch_amount;
+        }
+        break;
+    }
+    case PSYNC_OUT_ON_VSYNC_OUT:
+    {
+        if (Player_VsyncOut_getRiseEdgeFlag())
+        {
+            output_duty_size = param->pch_amount;
+        }
+        break;
+    }
+    case PSYNC_OUT_ON_INTERNAL_60Hz:
+    {
+        break;
+    }
+    default:
+    {
+        PLAYER_LOG("\r\nFUNC:[%s] ERROR : [param->psync_mode] == not supported sync mode.", __FUNCTION__);
+        break;
+    }
+    }
+
+    //Step 3: Duty send out when output_duty_size != 0
+    if (output_duty_size)
+    {
+        if (param->ptest_pattern != PTP_DISABLE)   //Test Mode
+        {
+            //Prepare Test Pattern
+            App_Player_prepareTestPattern(gPlayer_TpDutyBuf, param->pch_amount, param->ptest_pattern);
+
+            //Send Test Pattern
+            App_Player_setDuty(gPlayer_TpDutyBuf, param->pch_amount, param->pout_model);
+        }
+        else
+        {
+            //Send Local Dimming Duty.
+            App_Player_setDuty(gPlayer_LdDutyBuf, param->pch_amount, param->pout_model);
+        }
+    }
 
     return PLAYER_SUCCESS;
 }

@@ -48,7 +48,7 @@ void SetVcoreUp(unsigned int level)
 }
 
 /*****************************************************************************
- * Internal Functions.
+ * External Functions.
  *****************************************************************************/
 void Clock_init(void)
 {
@@ -110,3 +110,5 @@ void Clock_init(void)
         SFRIFG1 &= ~OFIFG;    // Clear fault flags
     } while (SFRIFG1 & OFIFG);                  // Test oscillator fault flag
 }
+
+

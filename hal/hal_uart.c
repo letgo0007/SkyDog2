@@ -1,5 +1,7 @@
 /**@file    hal_uart.c
  *
+ * MSP430F5XXX UART (USCI module) HAL.
+ *
  * @history
  * Date     | Author  | Comment
  * ------------------------------------
@@ -12,7 +14,9 @@
 #include "stdarg.h"
 #include "string.h"
 
-/***Handle undefined constant***/
+/*****************************************************************************
+ * Internal Register Define.
+ *****************************************************************************/
 #ifndef SMCLK_F
 #define SMCLK_F             1048576
 #endif
@@ -51,17 +55,51 @@
 #define UART_DMA0_TX_TRIG   DMA0TSEL_21
 #endif
 
-/***UART operation constant***/
-#define UART_RX_BUF_SIZE    256
-#define UART_TX_BUF_SIZE    256
-#define UART_PRINTF_EN      1
-
-//Buffer
-unsigned char g_Uart_RxBuffer[UART_RX_BUF_SIZE] =
+/*****************************************************************************
+ * Internal Variables
+ *****************************************************************************/
+unsigned char Uart_RxBuffer[UART_RX_BUF_SIZE] =
 { 0 };
-unsigned char g_Uart_RxCount = 0;
+unsigned char Uart_RxCount = 0;
 
-/***External Functions.***/
+/*****************************************************************************
+ * Internal Functions
+ *****************************************************************************/
+
+#if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
+#pragma vector=UART_VECTOR
+__interrupt void Uart_Isr(void)
+#elif defined(__GNUC__)
+void __attribute__ ((interrupt(UART_VECTOR))) Uart_Isr (void)
+#else
+#error Compiler not supported!
+#endif
+{
+    switch (__even_in_range(UART_IV, 4))
+    {
+    case 0: // Vector 0 - no interrupt
+        break;
+    case 2: // Vector 2 - RXIFG
+        //Loop back function
+        while (!(UART_IFG & UCTXIFG))
+        {
+            ;
+        }
+        UART_TXBUF = UART_RXBUF;
+
+        //Buffer received data.
+        Uart_RxBuffer[Uart_RxCount++] = UART_RXBUF;
+        break;
+    case 4: // Vector 4 - TXIFG
+        break;
+    default:
+        break;
+    }
+}
+
+/*****************************************************************************
+ * External Functions
+ *****************************************************************************/
 void Uart_init(unsigned long baudrate)
 {
     //Calculate Baud-Rate
@@ -79,37 +117,7 @@ void Uart_init(unsigned long baudrate)
     UART_IE |= UCRXIE;                      // Enable UART RX interrupt
 }
 
-#if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
-#pragma vector=UART_VECTOR
-__interrupt void Uart_Isr(void)
-#elif defined(__GNUC__)
-void __attribute__ ((interrupt(UART_VECTOR))) Uart_Isr (void)
-#else
-#error Compiler not supported!
-#endif
-{
-    switch (__even_in_range(UART_IV, 4))
-    {
-    case 0:                         // Vector 0 - no interrupt
-        break;
-    case 2:                         // Vector 2 - RXIFG
-        //Loop back function
-        while (!(UART_IFG & UCTXIFG))
-        {
-            ;
-        }
-        UART_TXBUF = UART_RXBUF;
-
-        //buffer received data.
-        g_Uart_RxBuffer[g_Uart_RxCount++] = UART_RXBUF;
-        break;
-    case 4:                 // Vector 4 - TXIFG
-        break;
-    default:
-        break;
-    }
-}
-
+/*! Put 1 char to UART TX. */
 void Uart_putc(char byte)
 {
     while (!(UART_IFG & UCTXIFG))
@@ -119,6 +127,7 @@ void Uart_putc(char byte)
     UART_TXBUF = byte;
 }
 
+/*! Put string (end with 0x00) to UART TX. */
 unsigned char Uart_puts(char *string)
 {
     unsigned char i, len;
@@ -130,47 +139,53 @@ unsigned char Uart_puts(char *string)
     return len;
 }
 
+/*! Return last received data */
 unsigned char Uart_getc(void)
 {
     return UART_RXBUF;
 }
 
-/*! Get all UART RX data. */
-unsigned int Uart_gets(unsigned char *pdst)
+/*! Copy all buffered data out. */
+unsigned int Uart_gets(unsigned char *s)
 {
-    if (g_Uart_RxCount)
+    if (Uart_RxCount)
     {
-        memcpy(pdst, g_Uart_RxBuffer, g_Uart_RxCount);
+        memcpy(s, Uart_RxBuffer, Uart_RxCount);
     }
-    return g_Uart_RxCount;
+    return Uart_RxCount;
 }
 
-unsigned int Uart_getl(unsigned char *pdst)
+/*! Copy 1 line data out (before '\r'). */
+unsigned int Uart_getl(unsigned char *s)
 {
     unsigned int i = 0;
     unsigned int pos = 0;
     //Find '\r' position
-    for (i = 0; i < g_Uart_RxCount; i++)
+    for (i = 0; i < Uart_RxCount; i++)
     {
-        if (g_Uart_RxBuffer[i] == '\r')
+        if (Uart_RxBuffer[i] == '\r')
         {
             pos = i;
         }
     }
     //Copy data before '\r'
-    if(pos)
+    if (pos)
     {
-        memcpy(pdst, g_Uart_RxBuffer,pos);
+        memcpy(s, Uart_RxBuffer, pos);
     }
     return pos;
 }
 
+/*! Clear UART RX buffer.  */
 void Uart_clear(void)
 {
-    memset(g_Uart_RxBuffer, 0x00, g_Uart_RxCount);
-    g_Uart_RxCount = 0;
+    memset(Uart_RxBuffer, 0x00, Uart_RxCount);
+    Uart_RxCount = 0;
 }
 
+/*! Print using UART. The same as printf.
+ *  Use this when UART_PRINTF_OVERRIDE = 0 when you don't want to override original printf
+ */
 void Uart_print(char *fmt, ...)
 {
     va_list ap;

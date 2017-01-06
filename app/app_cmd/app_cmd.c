@@ -12,6 +12,9 @@
 #include "hal.h"
 #include "string.h"
 
+/*****************************************************************************
+ * Internal Defines.
+ *****************************************************************************/
 #define CMD_PRINT         printf
 
 /*****************************************************************************
@@ -45,32 +48,30 @@ void Cmd_I2c_puts(uint8_t *s, uint16_t len)
 /*****************************************************************************
  * External Functions.
  *****************************************************************************/
-
-uint8_t App_Cmd_handleI2c(void)
+void App_Cmd_I2c(void)
 {
-
-    return STATUS_SUCCESS;
+    ;
 }
 
-uint8_t App_Cmd_handleUart(void)
+void App_Cmd_Uart(void)
 {
     uint8_t cmd[256];
     uint8_t size;
-    if (size = Uart_getl(cmd))
+    if (size = Cmd_Uart_getl(cmd))
     {
-        if(size == 1)
+        if (size == 1) //Pure new line.
         {
             CMD_PRINT("\r\n");
         }
-        else if(!memcmp(cmd,"test",4))
+        else if (!memcmp(cmd, "test", 4))
         {
             CMD_PRINT("\r\n Well received.");
         }
-        else if(!memcmp(cmd,"player",6))
+        else if (!memcmp(cmd, "player", 6))
         {
             CMD_PRINT("\r\n Jump to PLAYER CMD");
         }
-        else if(!memcmp(cmd,"plimit",6))
+        else if (!memcmp(cmd, "plimit", 6))
         {
             CMD_PRINT("\r\n Jump to PLIMIT CMD");
         }
@@ -81,5 +82,4 @@ uint8_t App_Cmd_handleUart(void)
 
         Cmd_Uart_clear();
     }
-    return STATUS_SUCCESS;
 }

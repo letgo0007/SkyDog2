@@ -11,6 +11,7 @@
 #ifndef HAL_HAL_CLOCK_H_
 #define HAL_HAL_CLOCK_H_
 
+#include <msp430.h>
 #include "board.h"
 
 /****************************************************************************
@@ -45,18 +46,10 @@
 #define WATCHDOG_HOLD       WDTCTL = WDTPW | WDTHOLD                /*Watch dog disable */
 #define WATCHDOG_FEED       WDTCTL = WDT_ARST_1000                  /*Watch dog feed , ALCK source , 1000ms.*/
 
-#define MCU_RESET           do{ \
-        PMMCTL0_H = PMMPW_H; \
-        PMMCTL0_L |= PMMSWPOR; \
-}while(0)/*MCU reset using soft POR*/
-
-/*Reset MCU by software POR*/
-
-/******************************************************************************
- * @fn      Clock_init
+/*!@fn      Clock_init
  * @brief   Initialize MSP430 clock system .
  *          The parameters are pre-defined , do not support dynamic change now.
- *****************************************************************************/
+ */
 extern void Clock_init(void);
 
 #endif /* HAL_HAL_CLOCK_H_ */

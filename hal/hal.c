@@ -1,23 +1,46 @@
-/**@file    board.c
+/**@file    hal.h
+ *
+ * MSP430F5xxx overall MCU HAL level code.
  *
  * @history
  * Date     | Author  | Comment
  * ------------------------------------
- * 20170104 | Yang.Zf | Initial Version
+ * 20170106 | Yang.Zf | Initial Version
  */
 
-#include "board.h"
 #include "hal.h"
+#include "board.h"
 
-void Board_init(unsigned char bon)
+#ifndef SPI_MASTER_CLK
+#define SPI_MASTER_CLK      1000000
+#endif
+#ifndef UART_BAUDRATE
+#define UART_BAUDRATE       115200
+#endif
+#ifndef I2C_MASTER_CLK
+#define I2C_MASTER_CLK      100000
+#endif
+#ifndef I2C_SLAVE_ADDRESS
+#define I2C_SLAVE_ADDRESS   0x48
+#endif
+
+void Mcu_reset(void)
 {
-    if (bon) //Turn on board.
+    /*MCU reset using soft POR*/
+    PMMCTL0_H = PMMPW_H;
+    PMMCTL0_L |= PMMSWPOR;
+}
+
+void Mcu_init(unsigned char bon)
+{
+    if (bon)
     {
         Clock_init();
-        Uart_init(115200);
-        SpiMaster_init(1000000);
+        Uart_init(UART_BAUDRATE);
+        SpiMaster_init(SPI_MASTER_CLK);
         SpiSlave_init();
-        I2cSlave_init(0x48/2);
+        //I2cMaster_init(I2C_MASTER_CLK);
+        I2cSlave_init(I2C_SLAVE_ADDRESS / 2);
         PwmOut_init();
         PwmIn_init();
 
@@ -48,12 +71,10 @@ void Board_init(unsigned char bon)
          * 22h to 3Eh = Reserved
          **************************************************************************************/
         printf("\r\nBoard initialize finish, board name = [ %s ] , boot reason = [ 0x%x ].\r\n", BOARD_NAME, SYSRSTIV);
-
     }
-    else //Turn off board.
+    else
     {
 
     }
-
 }
 

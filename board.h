@@ -60,6 +60,11 @@
 #define I2C_MASTER_BASE     0
 #define I2C_SLAVE_BASE      USCI_B0_BASE
 
+#define SPI_MASTER_CLK      1000000
+#define UART_BAUDRATE       115200
+#define I2C_MASTER_CLK      100000
+#define I2C_SLAVE_ADDRESS   0x48
+
 /******************************************************************************
  * PWM define.
  *****************************************************************************/

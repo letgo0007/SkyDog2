@@ -1,5 +1,7 @@
 /**@file    hal_uart.h
  *
+ * MSP430F5XXX UART (USCI module) HAL.
+ *
  * @history
  * Date     | Author  | Comment
  * ------------------------------------
@@ -12,7 +14,9 @@
 #include <msp430.h>
 #include <stdio.h>
 
-#define UART_PRINTF_OVERRIDE    1   //Over ride printf function.
+#define UART_PRINTF_OVERRIDE    1       //1: printf override to UART  0: printf route to JTAG
+#define UART_RX_BUF_SIZE        256     //TX buffer size. Maximum size for sending at 1 time.
+#define UART_TX_BUF_SIZE        256     //TX buffer size. Maximum size for receiving at 1 time.
 
 /******************************************************************************
  * @fn      Uart_init
@@ -46,18 +50,18 @@ extern unsigned char Uart_getc(void);
  * @fn      Uart_gets
  * @brief   Get string from UART RX (buffered).
  * @note    If buffer is full ,data will be override.
- * @param   pdst is the pointer to destination of data copy buffer.
+ * @param   s is the pointer to destination of data copy buffer.
  * @return  The number of bytes received.
  *****************************************************************************/
-extern unsigned int Uart_gets(unsigned char *pdst);
+extern unsigned int Uart_gets(unsigned char *s);
 
 /******************************************************************************
  * @fn      Uart_getl
  * @brief   Get 1 line of string ,till get '\r'.
- * @param   pdst is the pointer to destination of data copy buffer.
+ * @param   s is the pointer to destination of data copy buffer.
  * @return  The number of bytes received.
  *****************************************************************************/
-extern unsigned int Uart_getl(unsigned char *pdst);
+extern unsigned int Uart_getl(unsigned char *s);
 
 /******************************************************************************
  * @fn      Uart_clear

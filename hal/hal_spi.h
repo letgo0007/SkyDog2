@@ -12,7 +12,8 @@
 #define HAL_HAL_SPI_H_
 
 #include "msp430.h"
-#include "board.h"
+
+#define SPI_S_RX_BUF_SIZE       256
 
 /******************************************************************************
  * @fn      SpiSlave_init
@@ -79,7 +80,7 @@ void SpiMaster_putc(char c);
  * @fn      SpiMaster_puts
  * @brief   Put string to SPI Master MOSI.
  * @param   *s   : is the pointer to string to be transmitted.
- * @param   len : is the size of string.
+ * @param   len  : is the size of string.
  *****************************************************************************/
 void SpiMaster_puts(unsigned char *s, unsigned int len);
 
@@ -102,6 +103,12 @@ unsigned char SpiMaster_getc(void);
  *****************************************************************************/
 void SpiMaster_gets(unsigned char *s, unsigned int len);
 
+/******************************************************************************
+ * @fn      SpiMaster_setCsPins
+ * @brief   Set select CS pins to active state.
+ * @param   cs_sel : Each bit of cs_sel indicates 1 SPI_M_CS pin.
+ *                   SPI_M_CS_ALL is set when any bit is 1.
+ *****************************************************************************/
 void SpiMaster_setCsPins(unsigned int cs_sel);
 
 #endif /* HAL_HAL_SPI_H_ */

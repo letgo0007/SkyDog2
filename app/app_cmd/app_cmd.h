@@ -13,8 +13,12 @@
 
 #include "stdint.h"
 
-extern uint8_t App_Cmd_handleI2c(void);
+/*!@brief   Get Command from I2C Slave & process.
+ */
+extern void App_Cmd_I2c(void);
 
-extern uint8_t App_Cmd_handleUart(void);
+/*!@brief   Get Command from UART & process.
+ */
+extern void App_Cmd_Uart(void);
 
 #endif /* APP_APP_CMD_H_ */

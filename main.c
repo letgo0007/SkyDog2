@@ -5,44 +5,33 @@
 #include "app.h"
 #include "board.h"
 
-/*
- * main.c
- */
-unsigned int rxbuf[256];
+PLAYER_PARAM gPlayerParam =
+{
+        .pch_amount = 10,
+        .pin_model = IN_D8_P8,
+        .pout_model = OUT_D8_P8,
+        .psync_mode = PSYNC_OUT_ON_VSYNC_OUT,
+        .ptest_pattern =PTP_RUN_HORSE,
+};
 
 int main(void)
 {
     WATCHDOG_FEED;
-    Board_init(ON);
+    Mcu_init(ON);
 
-    PwmOut_setOutput(0, 60, 0);
+    //Test ONLY
     PwmOut_setOutput(1, 60, 128);
     PwmOut_setOutput(2, 60, 64);
 
     while (1)
     {
         WATCHDOG_FEED;
-        unsigned char size;
 
-        App_Cmd_handleI2c();
-        App_Cmd_handleUart();
+        App_Cmd_Uart();
+        App_Cmd_I2c();
 
-#if 1
-        //SpiSlave_puts("ABCDEFGHIJ", 10);
-        //SpiMaster_gets(&rxbuf[100], 5);
+        App_Player(&gPlayerParam);
 
-        SpiMaster_setCsPins(1);
-        SpiMaster_puts("0123456789", 10);
-        SpiMaster_setCsPins(0);
-
-        size = App_Player_getDuty(rxbuf, IN_D8_P8);
-        if (size)
-        {
-            printf("\r\nGet SPI data number %d ", size);
-            App_Player_printDuty(rxbuf, 5, 4);
-            App_Player_setDuty(rxbuf, 5, OUT_CPLD_SU860A_6X10);
-        }
-#endif
-        DELAY_MS(100);
+        DELAY_MS(10);
     }
 }

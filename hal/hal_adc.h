@@ -1,9 +1,11 @@
 /**@file    hal_adc.h
  *
+ * MSP430F5XXX ADC HAL code.
+ *
  * @history
  * Date     | Author  | Comment
  * ------------------------------------
- * 2017Äê1ÔÂ5ÈÕ | GKX100052 | Initial Version
+ * 20170105 | Yang.Zf | Initial Version
  */
 
 #ifndef HAL_HAL_ADC_H_

@@ -9,6 +9,7 @@
  */
 
 #include "hal_spi.h"
+#include "board.h"
 
 /***[ SPI Slave ] start*******************************************************/
 
@@ -17,7 +18,7 @@
 #endif
 
 /*****************************************************************************
- * [ SPI Slave ]  macro & register define.
+ * [ SPI Slave ]  Internal Register Define.
  *****************************************************************************/
 #if SPI_SLAVE_BASE == USCI_A0_BASE
 //P3.2 = STE , P3.3 = MOSI , P3.4 = MISO , 2.7 = CLK
@@ -54,9 +55,8 @@
 #define SPI_S_RX_DMADA          DMA0DA
 
 /*****************************************************************************
- * [ SPI Slave ] operation buffers.
+ * [ SPI Slave ] Internal Variables.
  *****************************************************************************/
-#define SPI_S_RX_BUF_SIZE       256
 static unsigned char SpiS_Rxbuf[SPI_S_RX_BUF_SIZE] =
 { 0 };
 static unsigned char *SpiS_TxPtr = 0;
@@ -146,7 +146,7 @@ void SpiSlave_putc(char c)
 
 void SpiSlave_puts(unsigned char *s, unsigned int len)
 {
-    if ((len) &&(s != 0))
+    if ((len) && (s != 0))
     {
         //Set 1st byte.
         SPI_S_TXBUF = *s;

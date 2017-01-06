@@ -1,5 +1,7 @@
 /**@file    hal_i2c.c
  *
+ * MSP430F5XXX I2C (USCI_Bx) HAL.
+ *
  * @history
  * Date     | Author  | Comment
  * ------------------------------------
@@ -7,6 +9,7 @@
  */
 
 #include "hal_i2c.h"
+#include "board.h"
 
 /***[ I2C Slave ] start*******************************************************/
 
@@ -28,8 +31,12 @@
 #define I2C_S_IFG           UCB0IFG
 #define I2C_S_RXBUF         UCB0RXBUF
 #define I2C_S_TXBUF         UCB0TXBUF
+#define I2C_S_STAT          UCB0STAT
 #endif
 
+#if I2C_SLAVE_BASE == USCI_B1_BASE
+
+#endif
 #define I2C_S_RXBUF_SIZE    128
 #define I2C_S_TXBUF_SIZE    128
 
@@ -92,11 +99,11 @@ void __attribute__ ((interrupt(I2C_S_VECTOR))) USCI_B0_ISR (void)
 void I2cSlave_init(unsigned char slave_add)
 {
     SET_I2C_S_FUNC_IO;
-    I2C_S_CTL1 |= UCSWRST;                      // Enable SW reset
-    I2C_S_CTL0 = UCMODE_3 + UCSYNC;             // I2C Slave, synchronous mode
-    I2C_S_OA = slave_add;                         // Own Address is 048h
-    I2C_S_CTL1 &= ~UCSWRST;                     // Clear SW reset, resume operation
-    I2C_S_IE |= UCSTPIE + UCSTTIE + UCRXIE + UCTXIE;     // Enable STT, STP & RX interrupt
+    I2C_S_CTL1 |= UCSWRST;                  // Reset USCI
+    I2C_S_CTL0 = UCMODE_3 + UCSYNC;         // I2C Slave, synchronous mode
+    I2C_S_OA = slave_add;                   // Slave Address
+    I2C_S_CTL1 &= ~UCSWRST;                 // Enable USCI
+    I2C_S_IE |= UCSTPIE + UCSTTIE + UCRXIE + UCTXIE;     // Enable interrupt.
 }
 
 unsigned char I2cSlave_getc(void)
@@ -106,6 +113,11 @@ unsigned char I2cSlave_getc(void)
 
 unsigned int I2cSlave_gets(unsigned char *s)
 {
+    if (I2C_S_STAT & UCBBUSY)   //I2C is busy.
+    {
+        return 0;
+    }
+
     unsigned int i;
     for (i = 0; i < I2cSlave_RxCount; i++)
     {
