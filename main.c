@@ -7,7 +7,7 @@
 
 PLAYER_PARAM gPlayerParam =
 {
-        .pch_amount = 10,
+        .pch_amount = 60,
         .pin_model = IN_D8_P8,
         .pout_model = OUT_D8_P8,
         .psync_mode = PSYNC_OUT_ON_VSYNC_OUT,
@@ -18,6 +18,8 @@ int main(void)
 {
     WATCHDOG_FEED;
     Mcu_init(ON);
+    APP_PLIMIT_init(1);
+
 
     //Test ONLY
     PwmOut_setOutput(1, 60, 128);

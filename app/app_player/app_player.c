@@ -454,6 +454,7 @@ PLAYER_RET App_Player(PLAYER_PARAM *param)
     }
     }
 
+
     //Step 3: Duty send out when output_duty_size != 0
     if (output_duty_size)
     {
@@ -462,12 +463,17 @@ PLAYER_RET App_Player(PLAYER_PARAM *param)
             //Prepare Test Pattern
             App_Player_prepareTestPattern(gPlayer_TpDutyBuf, param->pch_amount, param->ptest_pattern);
 
+            APP_PLIMIT(gPlayer_TpDutyBuf,gPlayer_TpDutyBuf);
+
             //Send Test Pattern
             App_Player_setDuty(gPlayer_TpDutyBuf, param->pch_amount, param->pout_model);
         }
-        else
+        else //Local Dimming Mode
         {
             //Send Local Dimming Duty.
+
+            APP_PLIMIT(gPlayer_LdDutyBuf,gPlayer_LdDutyBuf);
+
             App_Player_setDuty(gPlayer_LdDutyBuf, param->pch_amount, param->pout_model);
         }
     }

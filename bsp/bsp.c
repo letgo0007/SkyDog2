@@ -1,4 +1,4 @@
-/**@file    bsp.h
+/**@file    bsp.c
  *
  * Board Support Package level code index.
  *
@@ -8,12 +8,10 @@
  * 20170107 | Yang.Zf | Initial Version
  */
 
+#include "bsp.h"
 
-#ifndef BSP_BSP_H_
-#define BSP_BSP_H_
+void Bsp_init(tDataBase *db)
+{
+    ;
+}
 
-#include "iw7027\iw7027.h"
-#include "database\database.h"
-
-
-#endif /* BSP_BSP_H_ */

@@ -89,8 +89,8 @@ typedef long HI_S32;
 #define PLIMIT_FORMAT_12DATA_8X1_5PACKET 0x03   // 0xAA, 0xAB, 0xBB,
 #define PLIMIT_FORMAT_12DATA_16PACKET   0x04    // 0x0AAA, 0x0BBB
 
-#define PLIMIT_INPUT_FORMAT             PLIMIT_FORMAT_8DATA_8PACKET
-#define PLIMIT_OUTPUT_FORMAT            PLIMIT_FORMAT_12DATA_8X1_5PACKET
+#define PLIMIT_INPUT_FORMAT             PLIMIT_FORMAT_12DATA_16PACKET
+#define PLIMIT_OUTPUT_FORMAT            PLIMIT_FORMAT_12DATA_16PACKET
 
 //API return value define.
 typedef enum PLIMIT_RET
@@ -240,6 +240,43 @@ extern PLIMIT_RET App_PlimitPrint(tPlimit_Data *pstdata, tPlimit_Param *pstparam
  * @return PLIMIT_SUCCESS or PLIMIT_FAIL of the progress.
  */
 extern PLIMIT_RET App_Plimit_resetDataBuf(tPlimit_Data *pstdata, tPlimit_Param *pstparam);
+
+/*!@brief   App_Plimit_Db_initParamByIndex
+ *          Load build-in constant parameter by index number.
+ *          This function mapping the index number to constants.
+ *
+ * @param   u8index     is the index number of database you want to set.
+ * @param   pstparam    is the pointer to target parameter.
+ * @param   pstdb       is the pointer to database.
+ * @return  PLIMIT_SUCCESS or PLIMIT_FAIL of the progress.
+ */
+extern PLIMIT_RET App_Plimit_Db_setParamIndex(HI_U8 u8index, tPlimit_Param *pstparam, tPlimit_Db *pstdb);
+
+/*!@fn      App_Plimit_Db_getParamIndex
+ * @brief   Get current parameter index.
+ * @param   current_index   is the pointer to buffer to save index value.
+ * @param   pstdb           is the pointer to Database struct.
+ * @return  PLIMIT_SUCCESS or PLIMIT_FAIL of the progress.
+ */
+extern PLIMIT_RET App_Plimit_Db_getParamIndex(HI_U8 *current_index, tPlimit_Db *pstdb);
+
+extern PLIMIT_RET App_Plimit_init(HI_U16 param_index, tPlimit_Data *pstdata, tPlimit_Param *pstparam, tPlimit_Db *pstdb);
+
+extern PLIMIT_RET APP_PLIMIT_setSafeTemp(void);
+
+extern PLIMIT_RET APP_PLIMIT_setGammaTable(void);
+
+extern PLIMIT_RET APP_PLIMIT(void *pu16input, void *pu16output);
+
+extern PLIMIT_RET APP_PLIMIT_Print(void);
+
+extern PLIMIT_RET APP_PLIMIT_resetDataBuf(void);
+
+extern PLIMIT_RET APP_PLIMIT_DB_setParamIndex(HI_U8 u8index);
+
+extern PLIMIT_RET APP_PLIMIT_DB_getParamIndex(HI_U8 *current_index);
+
+extern PLIMIT_RET APP_PLIMIT_init(HI_U16 param_index);
 
 #endif /* API_plimit_H_ */
 

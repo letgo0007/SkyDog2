@@ -16,6 +16,7 @@
  *****************************************************************************/
 
 #include "app_plimit.h"
+#include "app_plimit_db.h"
 
 /***Internal Functions********************************************************/
 
@@ -439,6 +440,15 @@ PLIMIT_RET App_Plimit_resetDataBuf(tPlimit_Data *pstdata, tPlimit_Param *pstpara
     return PLIMIT_SUCCESS;
 }
 
+PLIMIT_RET App_Plimit_init(HI_U16 param_index, tPlimit_Data *pstdata, tPlimit_Param *pstparam, tPlimit_Db *pstdb)
+{
+    App_Plimit_Db_setParamIndex(param_index, pstparam, pstdb);
+    App_Plimit_resetDataBuf(pstdata, pstparam);
+    App_Plimit_setSafeTemp(pstdata, pstparam);
+
+    return PLIMIT_SUCCESS;
+}
+
 PLIMIT_RET App_Plimit(void *pvinput, void *pvoutput, tPlimit_Data *pstdata, tPlimit_Param *pstparam)
 {
     PLIMIT_CKECK_NULL_POINTER(pvinput);
@@ -482,5 +492,67 @@ PLIMIT_RET App_Plimit(void *pvinput, void *pvoutput, tPlimit_Data *pstdata, tPli
     }
 
     return PLIMIT_SUCCESS;
+}
+
+PLIMIT_RET App_Plimit_Db_setParamIndex(HI_U8 u8index, tPlimit_Param *pstparam, tPlimit_Db *pstdb)
+{
+    PLIMIT_CKECK_NULL_POINTER(pstparam);
+    PLIMIT_CKECK_NULL_POINTER(pstdb);
+
+    //Store current index.
+    pstdb->current_index = u8index;
+
+    //Copy structure by index.
+    memcpy(pstparam, pstdb->pstParamList[pstdb->current_index], sizeof(tPlimit_Param));
+    PLIMIT_LOG("Load PLIMIT build-in param index:[ %d ]\r\n", pstdb->current_index);
+
+    return PLIMIT_SUCCESS;
+}
+
+PLIMIT_RET App_Plimit_Db_getParamIndex(HI_U8 *current_index, tPlimit_Db *pstdb)
+{
+    PLIMIT_CKECK_NULL_POINTER(current_index);
+    PLIMIT_CKECK_NULL_POINTER(pstdb);
+
+    *current_index = pstdb->current_index;
+    return PLIMIT_SUCCESS;
+}
+
+PLIMIT_RET APP_PLIMIT_setSafeTemp(void)
+{
+    return App_Plimit_setSafeTemp(&g_stPlimitData, &g_stPlimitParam);
+}
+PLIMIT_RET APP_PLIMIT_setGammaTable(void)
+{
+    return App_Plimit_setGammaTable(&g_stPlimitData, &g_stPlimitParam);
+}
+
+PLIMIT_RET APP_PLIMIT(void *pu16input, void *pu16output)
+{
+    return App_Plimit(pu16input, pu16output, &g_stPlimitData, &g_stPlimitParam);
+}
+
+PLIMIT_RET APP_PLIMIT_Print(void)
+{
+    return App_PlimitPrint(&g_stPlimitData, &g_stPlimitParam);
+}
+
+PLIMIT_RET APP_PLIMIT_resetDataBuf(void)
+{
+    return App_Plimit_resetDataBuf(&g_stPlimitData, &g_stPlimitParam);
+}
+PLIMIT_RET APP_PLIMIT_DB_setParamIndex(HI_U8 u8index)
+{
+    return App_Plimit_Db_setParamIndex(u8index, &g_stPlimitParam, &g_stPlimitDb);
+}
+
+PLIMIT_RET APP_PLIMIT_DB_getParamIndex(HI_U8 *current_index)
+{
+    return App_Plimit_Db_getParamIndex(current_index, &g_stPlimitDb);
+}
+
+PLIMIT_RET APP_PLIMIT_init(HI_U16 param_index)
+{
+    return App_Plimit_init(param_index, &g_stPlimitData, &g_stPlimitParam, &g_stPlimitDb);
 }
 

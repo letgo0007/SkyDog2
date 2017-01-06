@@ -279,23 +279,6 @@ static tPlimit_Db g_stPlimitDb =
     .pstParamList[0x03] = (tPlimit_Param *)&g_stPlimitParam_60SU860A_150mA,
 };
 
-/*!@brief   App_Plimit_Db_initParamByIndex
- *          Load build-in constant parameter by index number.
- *          This function mapping the index number to constants.
- *
- * @param   u8index     is the index number of database you want to set.
- * @param   pstparam    is the pointer to target parameter.
- * @param   pstdb       is the pointer to database.
- * @return  PLIMIT_SUCCESS or PLIMIT_FAIL of the progress.
- */
-extern PLIMIT_RET App_Plimit_Db_setParamIndex(HI_U8 u8index, tPlimit_Param *pstparam, tPlimit_Db *pstdb);
 
-/*!@fn      App_Plimit_Db_getParamIndex
- * @brief   Get current parameter index.
- * @param   current_index   is the pointer to buffer to save index value.
- * @param   pstdb           is the pointer to Database struct.
- * @return  PLIMIT_SUCCESS or PLIMIT_FAIL of the progress.
- */
-extern PLIMIT_RET App_Plimit_Db_getParamIndex(HI_U8 *current_index, tPlimit_Db *pstdb);
 
 #endif /* APP_APP_PLIMIT_DB_H_ */
