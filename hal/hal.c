@@ -39,7 +39,7 @@ void Mcu_init(unsigned char bon)
         Uart_init(UART_BAUDRATE);
         SpiMaster_init(SPI_MASTER_CLK);
         SpiSlave_init();
-        //I2cMaster_init(I2C_MASTER_CLK);
+        I2cMaster_init(I2C_MASTER_CLK);
         I2cSlave_init(I2C_SLAVE_ADDRESS / 2);
         PwmOut_init();
         PwmIn_init();

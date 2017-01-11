@@ -235,6 +235,7 @@ P4SEL &= ~BIT0; \
 #define SPI_M_VECTOR            USCI_B1_VECTOR
 #endif
 
+#if SPI_MASTER_BASE
 /*****************************************************************************
  * [ SPI Master ] operation buffers.
  *****************************************************************************/
@@ -255,9 +256,9 @@ void __attribute__ ((interrupt(SPI_M_VECTOR))) SpiMaster_Isr (void)
 {
     switch (__even_in_range(SPI_M_IV, 4))
     {
-    case 0:     // Vector 0 - no interrupt
+        case 0:     // Vector 0 - no interrupt
         break;
-    case 2:     // Vector 2 - RXIFG
+        case 2:// Vector 2 - RXIFG
         if (Spi_M_RxLen == 0)
         {
             SPI_M_IE &= ~UCRXIE;    //Disable RX Interrupt when finish.
@@ -268,18 +269,19 @@ void __attribute__ ((interrupt(SPI_M_VECTOR))) SpiMaster_Isr (void)
             Spi_M_RxLen--;
         }
         break;
-    case 4:     // Vector 4 - TXIFG
+        case 4:     // Vector 4 - TXIFG
         break;
-    default:
+        default:
         break;
     }
 }
-
+#endif
 /*****************************************************************************
  * [ SPI Master ] External Functions.
  *****************************************************************************/
 void SpiMaster_init(unsigned long freq)
 {
+#if SPI_MASTER_BASE
     // Set function IO.
     SET_SPI_M_FUNC_IO
     ;
@@ -301,19 +303,23 @@ void SpiMaster_init(unsigned long freq)
     SPI_M_BR1 = br >> 8;
     //**Enable**
     SPI_M_CTL1 &= ~UCSWRST;
+#endif
 }
 
 void SpiMaster_putc(char c)
 {
+#if SPI_MASTER_BASE
     while (!(SPI_M_IFG & UCTXIFG))
     {
         ;
     }
     SPI_M_TXBUF = c;
+#endif
 }
 
 void SpiMaster_puts(unsigned char *s, unsigned int len)
 {
+#if SPI_MASTER_BASE
     //Transfer multiple byte.
     while (len--)
     {
@@ -324,19 +330,27 @@ void SpiMaster_puts(unsigned char *s, unsigned int len)
     {
         ;
     }
+#endif
 }
 
 unsigned char SpiMaster_getc(void)
 {
+#if SPI_MASTER_BASE
     return SPI_M_RXBUF;
+#else
+    return 0;
+#endif
+
 }
 
 void SpiMaster_gets(unsigned char *s, unsigned int len)
 {
+#if SPI_MASTER_BASE
     Spi_M_RxPtr = s;
     Spi_M_RxLen = len;
     SPI_M_IFG &= ~UCRXIFG;
     SPI_M_IE |= UCRXIE;
+#endif
 }
 
 void SpiMaster_setCsPins(unsigned int cs_sel)
@@ -377,3 +391,4 @@ void SpiMaster_setCsPins(unsigned int cs_sel)
     }
 #endif
 }
+

@@ -55,9 +55,9 @@
  * USCI define.
  *****************************************************************************/
 #define SPI_SLAVE_BASE      USCI_A0_BASE
-#define SPI_MASTER_BASE     USCI_B1_BASE
+#define SPI_MASTER_BASE     0
 #define UART_BASE           USCI_A1_BASE
-#define I2C_MASTER_BASE     0
+#define I2C_MASTER_BASE     USCI_B1_BASE
 #define I2C_SLAVE_BASE      USCI_B0_BASE
 
 #define SPI_MASTER_CLK      1000000
