@@ -14,6 +14,8 @@ PLAYER_PARAM gPlayerParam =
         .ptest_pattern =PTP_RUN_HORSE,
 };
 uint8_t buf[10];
+//This is a git test
+
 int main(void)
 {
     WATCHDOG_FEED;
