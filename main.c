@@ -18,7 +18,6 @@ uint8_t buf[10];
 
 //This is also at test
 
-
 int main(void)
 {
     WATCHDOG_FEED;
